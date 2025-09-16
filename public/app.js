@@ -67,16 +67,24 @@ class VideoProctoringApp {
     }
     
     initializeSocket() {
-        // Demo mode - no backend server required
-        this.socket = {
-            emit: (event, data) => {
-                console.log('Demo mode - Socket emit:', event, data);
-            },
-            on: (event, callback) => {
-                console.log('Demo mode - Socket listener:', event);
+        this.socket = io();
+        
+        this.socket.on('connect', () => {
+            console.log('Connected to server');
+        });
+        
+        this.socket.on('real-time-event', (data) => {
+            this.handleRealTimeEvent(data);
+            
+            // Update violation counters from server data
+            if (data.violationCounts) {
+                this.updateViolationCountersFromServer(data.violationCounts);
             }
-        };
-        console.log('Demo mode - Socket initialized (no backend required)');
+        });
+        
+        this.socket.on('disconnect', () => {
+            console.log('Disconnected from server');
+        });
     }
     
     async startInterview() {
@@ -92,9 +100,22 @@ class VideoProctoringApp {
         try {
             this.showLoading('Initializing interview session...');
             
-            // Demo mode - create mock session
-            this.sessionId = 'demo-session-' + Date.now();
-            console.log('Demo mode - Created session:', this.sessionId);
+            // Create session
+            const response = await fetch('/api/session/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    candidateName: this.candidateName
+                })
+            });
+            
+            const data = await response.json();
+            this.sessionId = data.sessionId;
+            
+            // Join socket room
+            this.socket.emit('join-session', this.sessionId);
             
             // Initialize camera
             await this.initializeCamera();
@@ -201,8 +222,19 @@ class VideoProctoringApp {
                 clearInterval(this.durationInterval);
             }
             
-            // Demo mode - mock session end
-            console.log('Demo mode - Session ended:', this.sessionId);
+            // End session on server
+            const response = await fetch('/api/session/end', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    sessionId: this.sessionId
+                })
+            });
+            
+            const data = await response.json();
+            console.log('Session ended:', data);
             
             // Show generate report button
             document.getElementById('generateReportBtn').classList.remove('hidden');
@@ -276,13 +308,23 @@ class VideoProctoringApp {
         
         try {
             const blob = new Blob(this.recordedChunks, { type: 'video/webm' });
-            console.log('Demo mode - Video recording saved locally:', blob.size, 'bytes');
+            const formData = new FormData();
+            formData.append('video', blob, `${this.sessionId}_recording.webm`);
+            formData.append('sessionId', this.sessionId);
             
-            // In demo mode, we just log the recording instead of uploading
-            console.log('Demo mode - Recording would be uploaded in production');
+            const response = await fetch('/api/upload/video', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (response.ok) {
+                console.log('Video uploaded successfully');
+            } else {
+                console.error('Failed to upload video');
+            }
             
         } catch (error) {
-            console.error('Error handling recording:', error);
+            console.error('Error uploading recording:', error);
         }
     }
     
@@ -290,10 +332,19 @@ class VideoProctoringApp {
         try {
             this.showLoading('Generating proctoring report...');
             
-            // Demo mode - generate mock session data
-            const sessionData = this.generateMockSessionData();
+            const response = await fetch(`/api/session/${this.sessionId}/report`);
             
-            console.log('Demo mode - Generated mock session data:', sessionData);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const sessionData = await response.json();
+            
+            if (!sessionData) {
+                throw new Error('No session data received');
+            }
+            
+            console.log('Session data received:', sessionData);
             
             this.displayReport(sessionData);
             this.showReportSection();
@@ -879,63 +930,9 @@ class VideoProctoringApp {
     hideLoading() {
         this.loadingOverlay.classList.add('hidden');
     }
-
-    generateMockSessionData() {
-        const endTime = new Date();
-        const duration = this.startTime ? Math.floor((endTime - this.startTime) / 1000) : 300; // 5 minutes default
-        
-        // Generate some realistic mock violations based on detection system data
-        const violations = {
-            focusLost: Math.floor(Math.random() * 3),
-            faceAbsent: Math.floor(Math.random() * 2),
-            multipleFaces: Math.floor(Math.random() * 2),
-            unauthorizedItems: Math.floor(Math.random() * 2)
-        };
-
-        // Calculate integrity score based on violations
-        let integrityScore = 100;
-        integrityScore -= violations.focusLost * 10;
-        integrityScore -= violations.faceAbsent * 15;
-        integrityScore -= violations.multipleFaces * 20;
-        integrityScore -= violations.unauthorizedItems * 25;
-        integrityScore = Math.max(0, integrityScore);
-
-        // Generate mock events
-        const events = [];
-        const eventTypes = [
-            { type: 'face_detected', description: 'Primary face detected successfully', severity: 'low' },
-            { type: 'focus_lost', description: 'Candidate looked away from screen', severity: 'medium' },
-            { type: 'face_absent', description: 'No face detected in frame', severity: 'high' },
-            { type: 'multiple_faces', description: 'Multiple people detected', severity: 'high' },
-            { type: 'object_detected', description: 'Unauthorized object detected', severity: 'high' }
-        ];
-
-        // Add some random events
-        for (let i = 0; i < 5; i++) {
-            const randomEvent = eventTypes[Math.floor(Math.random() * eventTypes.length)];
-            const eventTime = new Date(this.startTime.getTime() + (i * 60000)); // Events every minute
-            events.push({
-                timestamp: eventTime.toISOString(),
-                type: randomEvent.type,
-                description: randomEvent.description,
-                severity: randomEvent.severity
-            });
-        }
-
-        return {
-            sessionId: this.sessionId,
-            candidateName: this.candidateName,
-            startTime: this.startTime ? this.startTime.toISOString() : new Date().toISOString(),
-            endTime: endTime.toISOString(),
-            duration: duration,
-            integrityScore: integrityScore,
-            violations: violations,
-            events: events
-        };
-    }
 }
 
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.app = new VideoProctoringApp();
+    new VideoProctoringApp();
 });
