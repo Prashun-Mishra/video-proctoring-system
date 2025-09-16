@@ -27,14 +27,22 @@ app.use('/uploads', express.static('uploads'));
 // Ensure uploads directory exists
 fs.ensureDirSync('./uploads/videos');
 
-// MongoDB connection
+// MongoDB connection with fallback to in-memory storage
+let mongoConnected = false;
+const inMemoryStorage = {
+  sessions: new Map(),
+  events: new Map()
+};
+
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/video_proctoring', {
   useNewUrlParser: true,
   useUnifiedTopology: true
 }).then(() => {
   console.log('Connected to MongoDB');
+  mongoConnected = true;
 }).catch(err => {
-  console.error('MongoDB connection error:', err);
+  console.error('MongoDB connection error, using in-memory storage:', err);
+  mongoConnected = false;
 });
 
 // Interview Session Schema
@@ -86,14 +94,26 @@ app.post('/api/session/create', async (req, res) => {
     const { candidateName } = req.body;
     const sessionId = uuidv4();
     
-    const session = new Session({
-      sessionId,
-      candidateName,
-      events: []
-    });
+    if (mongoConnected) {
+      const session = new Session({
+        sessionId,
+        candidateName,
+        startTime: new Date()
+      });
+      await session.save();
+    } else {
+      // Use in-memory storage
+      inMemoryStorage.sessions.set(sessionId, {
+        sessionId,
+        candidateName,
+        startTime: new Date(),
+        violations: { focusLost: 0, faceAbsent: 0, multipleFaces: 0, unauthorizedItems: 0 },
+        events: [],
+        integrityScore: 100
+      });
+    }
     
-    await session.save();
-    res.json({ sessionId, message: 'Session created successfully' });
+    res.json({ sessionId });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -103,15 +123,20 @@ app.post('/api/session/create', async (req, res) => {
 app.post('/api/session/end', async (req, res) => {
   try {
     const { sessionId } = req.body;
-    const session = await Session.findOne({ sessionId });
+    let session;
+    
+    if (mongoConnected) {
+      session = await Session.findOne({ sessionId });
+    } else {
+      session = inMemoryStorage.sessions.get(sessionId);
+    }
     
     if (!session) {
       return res.status(404).json({ error: 'Session not found' });
     }
     
-    session.endTime = new Date();
-    session.duration = Math.round((session.endTime - session.startTime) / 1000); // in seconds
-    session.status = 'completed';
+    const endTime = new Date();
+    const duration = Math.round((endTime - new Date(session.startTime)) / 1000);
     
     // Calculate integrity score
     let score = 100;
@@ -119,10 +144,23 @@ app.post('/api/session/end', async (req, res) => {
     score -= session.violations.faceAbsent * 10;
     score -= session.violations.multipleFaces * 15;
     score -= session.violations.unauthorizedItems * 20;
-    session.integrityScore = Math.max(0, score);
+    const integrityScore = Math.max(0, score);
     
-    await session.save();
-    res.json({ message: 'Session ended successfully', integrityScore: session.integrityScore });
+    if (mongoConnected) {
+      session.endTime = endTime;
+      session.duration = duration;
+      session.status = 'completed';
+      session.integrityScore = integrityScore;
+      await session.save();
+    } else {
+      session.endTime = endTime;
+      session.duration = duration;
+      session.status = 'completed';
+      session.integrityScore = integrityScore;
+      inMemoryStorage.sessions.set(sessionId, session);
+    }
+    
+    res.json({ message: 'Session ended successfully', integrityScore });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -132,11 +170,19 @@ app.post('/api/session/end', async (req, res) => {
 app.get('/api/session/:sessionId/report', async (req, res) => {
   try {
     console.log(`📊 Report requested for session: ${req.params.sessionId}`);
-    const session = await Session.findOne({ sessionId: req.params.sessionId });
+    let session;
+    
+    if (mongoConnected) {
+      session = await Session.findOne({ sessionId: req.params.sessionId });
+    } else {
+      session = inMemoryStorage.sessions.get(req.params.sessionId);
+    }
+    
     if (!session) {
       console.log(`❌ Session not found: ${req.params.sessionId}`);
       return res.status(404).json({ error: 'Session not found' });
     }
+    
     console.log(`✅ Session found, sending report data:`, {
       sessionId: session.sessionId,
       candidateName: session.candidateName,
@@ -183,7 +229,12 @@ io.on('connection', (socket) => {
       const { sessionId, eventType, description, severity } = data;
       console.log(`🚨 VIOLATION RECEIVED: ${eventType} - ${description}`);
       
-      const session = await Session.findOne({ sessionId });
+      let session;
+      if (mongoConnected) {
+        session = await Session.findOne({ sessionId });
+      } else {
+        session = inMemoryStorage.sessions.get(sessionId);
+      }
       
       if (session) {
         // Add event to session
@@ -193,7 +244,12 @@ io.on('connection', (socket) => {
           description,
           severity: severity || 'medium'
         };
-        session.events.push(newEvent);
+        
+        if (mongoConnected) {
+          session.events.push(newEvent);
+        } else {
+          session.events.push(newEvent);
+        }
         
         // Update violation counts
         switch (eventType) {
@@ -215,7 +271,11 @@ io.on('connection', (socket) => {
             break;
         }
         
-        await session.save();
+        if (mongoConnected) {
+          await session.save();
+        } else {
+          inMemoryStorage.sessions.set(sessionId, session);
+        }
         console.log(`💾 Session saved with violation: ${eventType}`);
         
         // Broadcast event to all clients in the session
