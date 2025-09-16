@@ -4,8 +4,16 @@
 [![MongoDB](https://img.shields.io/badge/MongoDB-6.x-green.svg)](https://www.mongodb.com/)
 [![TensorFlow.js](https://img.shields.io/badge/TensorFlow.js-4.x-orange.svg)](https://www.tensorflow.org/js)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/video-proctoring-system/deploy-status)](https://app.netlify.com/sites/video-proctoring-system/deploys)
 
 A comprehensive real-time video proctoring system for online interviews that uses advanced AI detection algorithms to monitor candidate behavior, detect violations, and generate detailed integrity reports.
+
+## 🌐 Live Demo
+🚀 **[Try the Live Application](https://video-proctoring-system.netlify.app)**
+
+📊 **Sample Reports**: Available in the `sample-reports/` directory
+- [Sample PDF Report](sample-reports/sample_proctoring_report.pdf)
+- [Sample CSV Report](sample-reports/sample_proctoring_report.csv)
 
 ## 🚀 Features
 
