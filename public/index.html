@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Proctoring System - Interview Monitor</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.2/dist/coco-ssd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-detection@1.0.2/dist/face-detection.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1> Video Proctoring System</h1>
+            <p>AI-Powered Interview Monitoring</p>
+        </header>
+
+        <!-- Session Setup -->
+        <div id="setupSection" class="section">
+            <div class="setup-form">
+                <h2>Start New Interview Session</h2>
+                <div class="form-group">
+                    <label for="candidateName">Candidate Name:</label>
+                    <input type="text" id="candidateName" placeholder="Enter candidate's full name" required>
+                </div>
+                <button id="startInterviewBtn" class="btn btn-primary">Start Interview</button>
+            </div>
+        </div>
+
+        <!-- Interview Interface -->
+        <div id="interviewSection" class="section hidden">
+            <div class="interview-header">
+                <div class="session-info">
+                    <h3>Interview Session</h3>
+                    <p>Candidate: <span id="candidateNameDisplay"></span></p>
+                    <p>Session ID: <span id="sessionIdDisplay"></span></p>
+                    <p>Duration: <span id="durationDisplay">00:00:00</span></p>
+                </div>
+                <div class="session-controls">
+                    <button id="endInterviewBtn" class="btn btn-danger">End Interview</button>
+                    <button id="generateReportBtn" class="btn btn-secondary hidden">Generate Report</button>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <!-- Video Feed -->
+                <div class="video-container">
+                    <video id="videoElement" autoplay muted></video>
+                    <canvas id="detectionCanvas"></canvas>
+                    <div class="video-controls">
+                        <button id="toggleRecordingBtn" class="btn btn-record">Start Recording</button>
+                        <div class="recording-indicator hidden" id="recordingIndicator">
+                            <span class="red-dot"></span> Recording
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detection Panel -->
+                <div class="detection-panel">
+                    <h3>Real-time Detection</h3>
+                    
+                    <!-- Status Indicators -->
+                    <div class="status-grid">
+                        <div class="status-item" id="faceStatus">
+                            <div class="status-icon">👤</div>
+                            <div class="status-text">
+                                <span class="status-label">Face Detection</span>
+                                <span class="status-value" id="faceStatusText">Detecting...</span>
+                            </div>
+                        </div>
+                        
+                        <div class="status-item" id="focusStatus">
+                            <div class="status-icon">👁️</div>
+                            <div class="status-text">
+                                <span class="status-label">Focus Status</span>
+                                <span class="status-value" id="focusStatusText">Monitoring...</span>
+                            </div>
+                        </div>
+                        
+                        <div class="status-item" id="objectStatus">
+                            <div class="status-icon">📱</div>
+                            <div class="status-text">
+                                <span class="status-label">Object Detection</span>
+                                <span class="status-value" id="objectStatusText">Scanning...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Violation Counters -->
+                    <div class="violation-counters">
+                        <h4>Violation Count</h4>
+                        <div class="counter-grid">
+                            <div class="counter-item">
+                                <span class="counter-label">Focus Lost</span>
+                                <span class="counter-value" id="focusLostCount">0</span>
+                            </div>
+                            <div class="counter-item">
+                                <span class="counter-label">Face Absent</span>
+                                <span class="counter-value" id="faceAbsentCount">0</span>
+                            </div>
+                            <div class="counter-item">
+                                <span class="counter-label">Multiple Faces</span>
+                                <span class="counter-value" id="multipleFacesCount">0</span>
+                            </div>
+                            <div class="counter-item">
+                                <span class="counter-label">Unauthorized Items</span>
+                                <span class="counter-value" id="unauthorizedItemsCount">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Events -->
+                    <div class="events-log">
+                        <h4>Live Events</h4>
+                        <div id="eventsContainer" class="events-container">
+                            <p class="no-events">No events detected yet...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Section -->
+        <div id="reportSection" class="section hidden">
+            <div class="report-container">
+                <h2>Proctoring Report</h2>
+                <div id="reportContent"></div>
+                <div class="report-actions">
+                    <button id="downloadReportBtn" class="btn btn-primary">Download Report</button>
+                    <button id="newSessionBtn" class="btn btn-secondary">Start New Session</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p>Loading AI models...</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="detection.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

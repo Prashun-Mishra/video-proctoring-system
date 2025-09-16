@@ -1,0 +1,11 @@
+Timestamp,Event Type,Severity,Details,Duration (s),Confidence
+2025-09-16T10:00:05Z,Face Detected,Info,Primary face detected,5,98.7
+2025-09-16T10:02:15Z,Face Not Detected,Warning,No face detected,3,95.2
+2025-09-16T10:05:30Z,Multiple Faces,Warning,2 faces detected,2,92.1
+2025-09-16T10:08:45Z,Looking Away,Warning,Candidate looked away from screen,4,88.3
+2025-09-16T10:10:20Z,Object Detected,High,Phone detected on desk,3,94.5
+2025-09-16T10:12:10Z,Face Detected,Info,Primary face detected,10,97.8
+2025-09-16T10:15:22Z,Audio Detected,Warning,Audio input detected,5,89.6
+2025-09-16T10:18:40Z,Window Focus Lost,High,Browser tab focus lost,2,99.1
+2025-09-16T10:20:15Z,Face Detected,Info,Primary face detected,8,98.2
+2025-09-16T10:22:30Z,Test Completed,Info,Exam session completed,-,100.0
