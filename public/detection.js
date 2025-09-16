@@ -83,7 +83,7 @@ class DetectionSystem {
     setSocket(socket, sessionId) {
         this.socket = socket;
         this.sessionId = sessionId;
-        console.log('Socket and session ID set for detection system');
+        console.log('🔌 Demo mode - Socket set for detection system:', sessionId);
     }
     
     setViolationCallback(callback) {
