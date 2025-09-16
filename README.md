@@ -4,16 +4,22 @@
 [![MongoDB](https://img.shields.io/badge/MongoDB-6.x-green.svg)](https://www.mongodb.com/)
 [![TensorFlow.js](https://img.shields.io/badge/TensorFlow.js-4.x-orange.svg)](https://www.tensorflow.org/js)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Netlify Status](https://api.netlify.com/api/v1/badges/video-proctoring-system/deploy-status)](https://app.netlify.com/sites/video-proctoring-system/deploys)
+[![Railway Deploy](https://img.shields.io/badge/Railway-Deployed-success.svg)](https://rare-gentleness-production.up.railway.app)
 
 A comprehensive real-time video proctoring system for online interviews that uses advanced AI detection algorithms to monitor candidate behavior, detect violations, and generate detailed integrity reports.
 
 ## 🌐 Live Demo
-🚀 **[Try the Live Application](https://video-proctoring-system.netlify.app)**
+🚀 **[Try the Live Application](https://rare-gentleness-production.up.railway.app)**
 
 📊 **Sample Reports**: Available in the `sample-reports/` directory
 - [Sample PDF Report](sample-reports/sample_proctoring_report.pdf)
 - [Sample CSV Report](sample-reports/sample_proctoring_report.csv)
+
+## 🏗️ Deployment Architecture
+- **Frontend**: React-based UI with TensorFlow.js AI detection
+- **Backend**: Node.js + Express + Socket.io for real-time communication
+- **Database**: MongoDB for session and violation data storage
+- **Platform**: Railway (full-stack deployment with auto-scaling)
 
 ## 🚀 Features
 
