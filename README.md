@@ -63,7 +63,7 @@ A comprehensive real-time video proctoring system for online interviews that use
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/yourusername/video-proctoring-system.git
+git clone https://github.com/Prashun-Mishra/video-proctoring-system.git
 cd video-proctoring-system
 ```
 
@@ -287,7 +287,7 @@ services:
 - name: web
   source_dir: /
   github:
-    repo: yourusername/video-proctoring-system
+    repo: Prashun-Mishra/video-proctoring-system
     branch: main
   run_command: npm start
   environment_slug: node-js
@@ -367,10 +367,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 👨‍💻 Author
 
 **Your Name**
-- GitHub: [@yourusername](https://github.com/yourusername)
-- Email: your.email@example.com
-- LinkedIn: [Your LinkedIn](https://linkedin.com/in/yourprofile)
-
+Prashun Mishra
 ## 🙏 Acknowledgments
 
 - [TensorFlow.js](https://www.tensorflow.org/js) for machine learning capabilities
