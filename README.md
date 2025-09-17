@@ -1,4 +1,4 @@
-# 🎯 TubeDude - AI-Powered Video Proctoring System
+# 🎯 AI-Powered Video Proctoring System
 
 [![Node.js](https://img.shields.io/badge/Node.js-18.x-green.svg)](https://nodejs.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-6.x-green.svg)](https://www.mongodb.com/)
@@ -63,8 +63,8 @@ A comprehensive real-time video proctoring system for online interviews that use
 
 ### 1. Clone Repository
 ```bash
-git clone https://github.com/yourusername/tubedude-proctoring.git
-cd tubedude-proctoring
+git clone https://github.com/yourusername/video-proctoring-system.git
+cd video-proctoring-system
 ```
 
 ### 2. Install Dependencies
@@ -189,7 +189,7 @@ Final Score: Math.max(0, baseScore - totalDeductions)
 ## 🏗️ Project Structure
 
 ```
-tubedude-proctoring/
+video-proctoring-system/
 ├── 📁 public/                 # Frontend assets
 │   ├── 📄 index.html         # Main application page
 │   ├── 📄 app.js             # Frontend application logic
@@ -231,7 +231,7 @@ POST /api/upload/video       # Upload recorded video
 
 ### Build Docker Image
 ```bash
-docker build -t tubedude-proctoring .
+docker build -t video-proctoring-system .
 ```
 
 ### Run with Docker Compose
@@ -263,7 +263,7 @@ volumes:
 ### Option 1: Heroku
 ```bash
 # Install Heroku CLI
-heroku create tubedude-proctoring
+heroku create video-proctoring-system
 heroku addons:create mongolab:sandbox
 git push heroku main
 ```
@@ -282,12 +282,12 @@ railway up
 
 ### Option 3: DigitalOcean App Platform
 ```yaml
-name: tubedude-proctoring
+name: video-proctoring-system
 services:
 - name: web
   source_dir: /
   github:
-    repo: yourusername/tubedude-proctoring
+    repo: yourusername/video-proctoring-system
     branch: main
   run_command: npm start
   environment_slug: node-js
